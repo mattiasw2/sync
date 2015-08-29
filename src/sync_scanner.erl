@@ -245,9 +245,9 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 dirs(DirsAndOpts) ->
-    [begin 
+    [begin
          sync_options:set_options(Dir, Opts),
-         
+
          %% ensure module out path exists & in our code list
          case proplists:get_value(outdir, Opts) of
              undefined ->
@@ -256,7 +256,7 @@ dirs(DirsAndOpts) ->
                  ok = filelib:ensure_dir(filename:join(Path, "sample")),
                  true = code:add_pathz(Path)
          end,
-         Dir 
+         Dir
      end || {Dir, Opts} <- DirsAndOpts].
 
 handle_info(_Info, State) ->
@@ -503,7 +503,10 @@ reload_if_necessary(CompileFun, SrcFile, Module, _OldBinary, _Binary, Options, W
             %% Module is not yet loaded, load it.
             case code:load_file(Module) of
                 {module, Module} -> ok
-            end
+            end;
+        {error, nofile} ->
+            io:format("~nMattias patch: Reloading of ~p failed, WHY?~n", [Module]),
+            ok
     end,
     gen_server:cast(?SERVER, compare_beams),
 
@@ -534,11 +537,11 @@ recompile_src_file(SrcFile, _EnablePatching) ->
 
                 {ok, OtherModule, _Binary, Warnings} ->
                     Desc = io_lib:format("Module definition (~p) differs from expected (~s)", [OtherModule, filename:rootname(filename:basename(SrcFile))]),
-                
+
                     Errors = [{SrcFile, {0, Module, Desc}}],
                     print_results(Module, SrcFile, Errors, Warnings),
                     {ok, Errors, Warnings};
-    
+
                 {error, Errors, Warnings} ->
                     %% Compiling failed. Print the warnings and errors...
                     print_results(Module, SrcFile, Errors, Warnings),
