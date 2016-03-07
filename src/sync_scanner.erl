@@ -502,10 +502,13 @@ reload_if_necessary(CompileFun, SrcFile, Module, _OldBinary, _Binary, Options, W
         {error, embedded} ->
             %% Module is not yet loaded, load it.
             case code:load_file(Module) of
-                {module, Module} -> ok
+                {module, Module} -> ok;
+                {error, nofile} ->
+                    io:format("~nMattias patch #2: Reloading of ~p failed, WHY?~n", [Module]),
+                    ok
             end;
         {error, nofile} ->
-            io:format("~nMattias patch: Reloading of ~p failed, WHY?~n", [Module]),
+            io:format("~nMattias patch #1: Reloading of ~p failed, WHY?~n", [Module]),
             ok
     end,
     gen_server:cast(?SERVER, compare_beams),
